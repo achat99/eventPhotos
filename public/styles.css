@@ -1,0 +1,83 @@
+body {
+  background: #f5f7fb;
+}
+
+.hero-card,
+.panel-card {
+  border: 0;
+  border-radius: 1rem;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+.thumb-preview {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 0.75rem;
+  background: #e9ecef;
+}
+
+.gallery-trigger {
+  display: block;
+  width: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.gallery-trigger .thumb-preview {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.gallery-trigger:hover .thumb-preview {
+  transform: scale(1.01);
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+}
+
+.gallery-preview-image {
+  width: 100%;
+  max-height: 75vh;
+  object-fit: contain;
+  border-radius: 1rem;
+  background: #111827;
+}
+
+.qr-preview {
+  max-width: 280px;
+  width: 100%;
+  border-radius: 1rem;
+  background: white;
+  padding: 0.75rem;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+.badge-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #7c2d12;
+  background: #ffedd5;
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+}
+
+.group-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: white;
+}
+
+#qr-scanner {
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.danger-zone-card {
+  border: 1px solid rgba(220, 38, 38, 0.18);
+  background: linear-gradient(180deg, #fff7f7 0%, #fff 100%);
+}
