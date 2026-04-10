@@ -10,7 +10,8 @@
         "allowZip": true,
         "maxResolution": "original",
         "watermark": false
-      }
+      },
+      "updatedAt": "2026-04-09T19:55:16.301Z"
     }
   ],
   "participants": [
@@ -37,6 +38,51 @@
       "lastname": "Qrtest",
       "token": "aac7dc96-f36a-4d54-b4c2-148e80f0a517",
       "createdAt": "2026-04-09T18:29:37.175Z"
+    },
+    {
+      "id": "6a42c941-b1d4-4751-8478-ac8997e04810",
+      "eventId": "evt_musterveranstaltung_2026",
+      "firstname": "Mail",
+      "lastname": "Versandtest",
+      "email": "mail.versandtest@example.com",
+      "token": "ef105cdb-29b7-4021-92b6-561fba375035",
+      "createdAt": "2026-04-10T18:45:38.982Z"
+    },
+    {
+      "id": "238c7676-9fa4-4080-ba24-2548d8c8b398",
+      "eventId": "evt_musterveranstaltung_2026",
+      "firstname": "Frisch",
+      "lastname": "Qrtest",
+      "email": "frisch.qrtest@example.com",
+      "token": "6cb65a81-ff33-44e2-8aca-24abe9ce8b4c",
+      "createdAt": "2026-04-10T18:52:46.078Z"
+    },
+    {
+      "id": "e210b1b6-dda0-40aa-ba76-d52d60eea099",
+      "eventId": "evt_musterveranstaltung_2026",
+      "firstname": "Finn-Niklas",
+      "lastname": "Rathjen",
+      "email": "f.rathjen@icloud.com",
+      "token": "4d99b971-5f42-4ffd-bebd-0fb345dfe782",
+      "createdAt": "2026-04-10T19:03:48.849Z"
+    },
+    {
+      "id": "b3a7e676-65d0-40fb-9bb6-af530605b09e",
+      "eventId": "evt_musterveranstaltung_2026",
+      "firstname": "Smtp",
+      "lastname": "Livetest",
+      "email": "fotos@schleswig-holstein.dlrg-jugend.de",
+      "token": "c4846bb8-ba5b-49f6-95af-c6cba38c9f94",
+      "createdAt": "2026-04-10T19:07:31.971Z"
+    },
+    {
+      "id": "37df1be8-f116-4977-8149-cde2f8ed9200",
+      "eventId": "evt_musterveranstaltung_2026",
+      "firstname": "Smtp",
+      "lastname": "Livetest2",
+      "email": "fotos@schleswig-holstein.dlrg-jugend.de",
+      "token": "974060b5-41a7-4bbb-9e49-bb51dd10cba1",
+      "createdAt": "2026-04-10T19:08:56.568Z"
     }
   ],
   "photos": [
@@ -269,11 +315,12 @@
     {
       "id": "ba120c35-b2ff-482d-80ed-90ab5521dee6",
       "eventId": "evt_musterveranstaltung_2026",
-      "status": "review",
+      "status": "done",
       "totalImages": 14,
       "processedImages": 14,
       "createdAt": "2026-04-09T18:34:00.575Z",
-      "updatedAt": "2026-04-09T18:34:45.994Z"
+      "updatedAt": "2026-04-09T18:37:41.085Z",
+      "releasedAt": "2026-04-09T18:37:41.085Z"
     }
   ]
 }

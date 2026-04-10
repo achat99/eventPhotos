@@ -1,0 +1,108 @@
+<%- include('partials/admin-shell-start', {
+  pageTitle,
+  event,
+  adminSection,
+  message,
+  error,
+  adminPageTitle: 'Teilnehmerverwaltung',
+  adminPageDescription: 'Teilnehmer anlegen, Namen pflegen sowie QR-Codes und Bilder direkt herunterladen.'
+}) %>
+
+<div class="row g-4">
+  <div class="col-12 col-xxl-4">
+    <div class="panel-card card h-100">
+      <div class="card-body p-4">
+        <h2 class="h4 mb-3">Neuen Teilnehmer anlegen</h2>
+        <p class="text-secondary small">Beim Anlegen kann direkt die Zugangsmail mit QR-Code und persönlichem Galerie-Link verschickt werden.</p>
+        <form action="/admin/events/<%= event.slug %>/participants" method="post" class="d-grid gap-3">
+          <div>
+            <label class="form-label">Vorname</label>
+            <input class="form-control" name="firstname" required />
+          </div>
+          <div>
+            <label class="form-label">Nachname</label>
+            <input class="form-control" name="lastname" required />
+          </div>
+          <div>
+            <label class="form-label">E-Mail-Adresse</label>
+            <input class="form-control" type="email" name="email" placeholder="name@example.com" required />
+          </div>
+          <button class="btn btn-primary" type="submit">Teilnehmer speichern</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xxl-8">
+    <div class="panel-card card h-100">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between gap-3 align-items-center mb-3">
+          <h2 class="h4 mb-0">Bestehende Teilnehmer</h2>
+          <span class="badge text-bg-dark"><%= participants.length %> Einträge</span>
+        </div>
+
+        <% if (!participants.length) { %>
+          <div class="alert alert-light border mb-0">Noch keine Teilnehmer vorhanden.</div>
+        <% } %>
+
+        <div class="row g-3">
+          <% participants.forEach((participant) => { %>
+            <div class="col-12 col-lg-6">
+              <div class="border rounded-4 p-3 h-100 bg-white">
+                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                  <div>
+                    <div class="fw-semibold"><%= participant.firstname %> <%= participant.lastname %></div>
+                    <div class="small text-secondary">Erstellt: <%= participant.createdAt %></div>
+                  </div>
+                  <div class="text-end">
+                    <div class="participant-stat"><strong><%= participant.assignedPhotos %></strong> Fotos</div>
+                    <div class="participant-stat text-secondary"><%= participant.releasedPhotos %> freigegeben</div>
+                  </div>
+                </div>
+
+                <form action="/admin/participants/<%= participant.id %>" method="post" class="d-grid gap-3">
+                  <input type="hidden" name="returnTo" value="/admin/events/<%= event.slug %>/participants" />
+
+                  <div class="row g-2">
+                    <div class="col-sm-6">
+                      <label class="form-label small">Vorname</label>
+                      <input class="form-control form-control-sm" name="firstname" value="<%= participant.firstname %>" required />
+                    </div>
+                    <div class="col-sm-6">
+                      <label class="form-label small">Nachname</label>
+                      <input class="form-control form-control-sm" name="lastname" value="<%= participant.lastname %>" required />
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label small">E-Mail-Adresse</label>
+                      <input class="form-control form-control-sm" type="email" name="email" value="<%= participant.email || '' %>" placeholder="name@example.com" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div class="form-label small mb-1">QR-Token</div>
+                    <code class="admin-token"><%= participant.token %></code>
+                  </div>
+
+                  <div class="small text-secondary">
+                    <strong>E-Mail:</strong>
+                    <%= participant.email || 'Noch keine E-Mail hinterlegt' %>
+                  </div>
+
+                  <div class="d-flex flex-wrap gap-2">
+                    <button class="btn btn-sm btn-outline-primary" type="submit">Daten speichern</button>
+                    <a class="btn btn-sm btn-outline-secondary" href="/admin/participants/<%= participant.id %>/qr">QR-Code laden</a>
+                    <a class="btn btn-sm btn-outline-secondary" href="/api/events/<%= event.id %>/download/<%= participant.id %>">Bilder laden</a>
+                    <a class="btn btn-sm btn-outline-secondary" href="/event/<%= event.slug %>/gallery?token=<%= participant.token %>" target="_blank" rel="noreferrer">Galerie öffnen</a>
+                    <button class="btn btn-sm btn-outline-success" type="submit" formaction="/admin/participants/<%= participant.id %>/send-access-email">Zugangsmail senden</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/admin-shell-end') %>

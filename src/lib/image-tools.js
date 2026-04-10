@@ -13,7 +13,6 @@ function ensureDirectories() {
     path.join(STORAGE_ROOT, 'originals'),
     path.join(STORAGE_ROOT, 'thumbs'),
     path.join(STORAGE_ROOT, 'lookups'),
-    path.join(STORAGE_ROOT, 'qrcodes'),
     path.join(process.cwd(), 'tmp'),
   ];
 

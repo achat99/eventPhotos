@@ -1,0 +1,72 @@
+<%- include('partials/admin-shell-start', {
+  pageTitle,
+  event,
+  adminSection,
+  message,
+  error,
+  adminPageTitle: 'Einstellungen',
+  adminPageDescription: 'Event-Konfiguration zentral speichern und direkt aus dem Adminbereich pflegen.'
+}) %>
+
+<div class="panel-card card">
+  <div class="card-body p-4">
+    <div class="settings-note mb-4">
+      Diese Werte werden dauerhaft in der lokalen Anwendungsdatenbank <code>data/store.json</code> gespeichert und nicht mehr nur aus der <code>.env</code> gelesen.
+    </div>
+
+    <form action="/admin/events/<%= event.slug %>/settings" method="post" class="d-grid gap-4">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Eventname</label>
+          <input class="form-control" name="name" value="<%= event.name %>" required />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Slug / URL</label>
+          <input class="form-control" name="slug" value="<%= event.slug %>" required />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Datum</label>
+          <input class="form-control" type="date" name="date" value="<%= event.date %>" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Kontakt-E-Mail</label>
+          <input class="form-control" type="email" name="contactEmail" value="<%= event.contactEmail %>" />
+        </div>
+      </div>
+
+      <div>
+        <h2 class="h5 mb-3">Downloadoptionen</h2>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">ZIP-Download</label>
+            <select class="form-select" name="allowZip">
+              <option value="yes" <%= event.download && event.download.allowZip ? 'selected' : '' %>>Erlaubt</option>
+              <option value="no" <%= event.download && !event.download.allowZip ? 'selected' : '' %>>Deaktiviert</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Ausgabegröße</label>
+            <select class="form-select" name="maxResolution">
+              <option value="original" <%= !event.download || event.download.maxResolution === 'original' ? 'selected' : '' %>>Original</option>
+              <option value="large" <%= event.download && event.download.maxResolution === 'large' ? 'selected' : '' %>>Groß</option>
+              <option value="medium" <%= event.download && event.download.maxResolution === 'medium' ? 'selected' : '' %>>Mittel</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Wasserzeichen</label>
+            <select class="form-select" name="watermark">
+              <option value="no" <%= !event.download || !event.download.watermark ? 'selected' : '' %>>Aus</option>
+              <option value="yes" <%= event.download && event.download.watermark ? 'selected' : '' %>>Ein</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <button class="btn btn-primary" type="submit">Einstellungen speichern</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include('partials/admin-shell-end') %>

@@ -1,0 +1,68 @@
+<%- include('partials/admin-shell-start', {
+  pageTitle,
+  event,
+  adminSection,
+  message,
+  error,
+  adminPageTitle: 'Neuer Batch & Review',
+  adminPageDescription: 'Neue Uploads starten und bestehende Batches gezielt in den Review schicken.'
+}) %>
+
+<div class="row g-4 mb-4">
+  <div class="col-12 col-xxl-5">
+    <div class="panel-card card h-100">
+      <div class="card-body p-4">
+        <h2 class="h4 mb-3">Batch hochladen</h2>
+        <p class="text-secondary">Mehrfach- oder Ordner-Upload. Die Sortierung erfolgt automatisch nach Dateiname.</p>
+        <form action="/api/events/<%= event.id %>/upload" method="post" enctype="multipart/form-data" class="d-grid gap-3">
+          <input class="form-control" type="file" name="images" accept="image/*" webkitdirectory directory multiple required />
+          <button class="btn btn-primary" type="submit">Batch analysieren</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xxl-7">
+    <div class="row g-3">
+      <div class="col-sm-4"><div class="panel-card card summary-tile"><div class="card-body"><div class="small text-secondary">Batches</div><div class="display-6 fw-bold"><%= stats.batches %></div></div></div></div>
+      <div class="col-sm-4"><div class="panel-card card summary-tile"><div class="card-body"><div class="small text-secondary">Offene Reviews</div><div class="display-6 fw-bold"><%= stats.pendingBatches %></div></div></div></div>
+      <div class="col-sm-4"><div class="panel-card card summary-tile"><div class="card-body"><div class="small text-secondary">Noch verborgen</div><div class="display-6 fw-bold"><%= stats.unreleasedPhotos %></div></div></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="panel-card card">
+  <div class="card-body p-4">
+    <h2 class="h4 mb-3">Vorhandene Batches</h2>
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead>
+          <tr>
+            <th>Erstellt</th>
+            <th>Status</th>
+            <th>Bilder</th>
+            <th class="text-end">Aktionen</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (!batches.length) { %>
+            <tr><td colspan="4" class="text-secondary">Noch keine Batches vorhanden.</td></tr>
+          <% } %>
+
+          <% batches.forEach((batch) => { %>
+            <tr>
+              <td><%= batch.createdAt %></td>
+              <td><span class="badge text-bg-<%= batch.status === 'done' ? 'success' : batch.status === 'review' ? 'warning' : 'secondary' %>"><%= batch.status %></span></td>
+              <td><%= batch.processedImages %> / <%= batch.totalImages %></td>
+              <td class="text-end">
+                <a class="btn btn-sm btn-outline-primary" href="/admin/events/<%= event.slug %>/batches/review?batch=<%= batch.id %>">Review öffnen</a>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/admin-shell-end') %>

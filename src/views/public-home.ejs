@@ -41,7 +41,7 @@
               <div class="panel-card card h-100">
                 <div class="card-body p-4">
                   <h2 class="h4 mb-3">1. QR-Code erstellen</h2>
-                  <p class="text-secondary">Teilnehmer registrieren sich mit Vor- und Nachnamen und laden ihren QR-Code direkt herunter.</p>
+                  <p class="text-secondary">Teilnehmer registrieren sich mit Vor- und Nachnamen sowie E-Mail-Adresse und erhalten ihren QR-Code plus Abruflink automatisch per Mail.</p>
 
                   <form action="/event/<%= event.slug %>/register" method="post" class="row g-3">
                     <div class="col-md-6">
@@ -51,6 +51,10 @@
                     <div class="col-md-6">
                       <label class="form-label">Nachname</label>
                       <input class="form-control" name="lastname" required />
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label">E-Mail-Adresse</label>
+                      <input class="form-control" type="email" name="email" placeholder="name@example.com" required />
                     </div>
                     <div class="col-12">
                       <div class="form-check">

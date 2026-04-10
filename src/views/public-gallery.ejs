@@ -18,7 +18,7 @@
               <p class="text-secondary mb-0">Freigegebene Fotos aus <%= event.name %></p>
             </div>
             <div class="d-flex flex-wrap gap-2">
-              <% if (photos.length > 0) { %>
+              <% if (photos.length > 0 && (!event.download || event.download.allowZip !== false)) { %>
                 <a class="btn btn-primary" href="/api/events/<%= event.id %>/download/<%= participant.id %>?token=<%= participant.token %>">Alle als ZIP herunterladen</a>
               <% } %>
               <a class="btn btn-outline-secondary" href="/event/<%= event.slug %>">Neuen QR-Code scannen</a>

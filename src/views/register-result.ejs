@@ -15,16 +15,30 @@
             <div class="card-body p-4 p-lg-5 text-center">
               <span class="badge text-bg-success mb-3">Registrierung abgeschlossen</span>
               <h1 class="h3 mb-2"><%= participant.firstname %> <%= participant.lastname %></h1>
-              <p class="text-secondary mb-4">Bitte den QR-Code speichern oder als Screenshot bereithalten. Er dient beim Fotografieren als Trennmarker.</p>
+              <p class="text-secondary mb-3">Bitte den QR-Code speichern oder als Screenshot bereithalten. Er dient beim Fotografieren als Trennmarker.</p>
+
+              <% if (message) { %>
+                <div class="alert alert-success text-start"><%= message %></div>
+              <% } %>
+
+              <% if (error) { %>
+                <div class="alert alert-warning text-start"><%= error %></div>
+              <% } %>
+
+              <div class="small text-secondary mb-3">
+                Versandadresse: <strong><%= participant.email || 'keine E-Mail hinterlegt' %></strong>
+              </div>
 
               <img class="qr-preview mb-4" src="<%= qrImagePath %>" alt="QR-Code für <%= participant.firstname %> <%= participant.lastname %>" />
 
               <div class="alert alert-light text-start small mb-4">
-                <strong>Hinweis:</strong> Nach dem Event kann derselbe QR-Code erneut gescannt werden, um die freigegebenen Fotos aufzurufen.
+                <strong>Hinweis:</strong> Dieser QR-Code enthält direkt den persönlichen Link zur Galerie. Alternativ funktioniert auch dieser Abruflink:<br />
+                <a href="<%= galleryUrl %>"><%= galleryUrl %></a>
               </div>
 
               <div class="d-grid gap-2 d-md-flex justify-content-md-center">
                 <a class="btn btn-primary" href="<%= qrImagePath %>" download="<%= participant.firstname %>-<%= participant.lastname %>-qr.png">QR-Code herunterladen</a>
+                <a class="btn btn-outline-primary" href="<%= galleryUrl %>">Galerie-Link öffnen</a>
                 <a class="btn btn-outline-secondary" href="/event/<%= event.slug %>">Zurück zur Startseite</a>
               </div>
             </div>

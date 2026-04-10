@@ -4,10 +4,23 @@ const { v4: uuidv4 } = require('uuid');
 
 const STORE_PATH = path.join(process.cwd(), 'data', 'store.json');
 
+function slugify(value, fallback = 'event') {
+  const normalized = String(value || '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, ' ')
+    .trim()
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  return normalized || fallback;
+}
+
 function defaultEvent() {
   return {
     id: 'evt_musterveranstaltung_2026',
-    slug: process.env.EVENT_SLUG || 'musterveranstaltung-2026',
+    slug: slugify(process.env.EVENT_SLUG || 'musterveranstaltung-2026', 'musterveranstaltung-2026'),
     name: process.env.EVENT_NAME || 'Musterveranstaltung 2026',
     date: process.env.EVENT_DATE || '2026-05-15',
     contactEmail: process.env.CONTACT_EMAIL || 'orga@example.com',
@@ -16,6 +29,40 @@ function defaultEvent() {
       maxResolution: 'original',
       watermark: false,
     },
+  };
+}
+
+function normalizeDownloadSettings(download = {}) {
+  const allowZip = download.allowZip === undefined
+    ? true
+    : download.allowZip === true || download.allowZip === 'true' || download.allowZip === 'yes' || download.allowZip === 1;
+  const watermark = download.watermark === true || download.watermark === 'true' || download.watermark === 'yes' || download.watermark === 1;
+  const maxResolution = ['original', 'large', 'medium'].includes(String(download.maxResolution || 'original'))
+    ? String(download.maxResolution || 'original')
+    : 'original';
+
+  return {
+    allowZip,
+    maxResolution,
+    watermark,
+  };
+}
+
+function normalizeEvent(event = {}) {
+  const fallback = defaultEvent();
+
+  return {
+    ...fallback,
+    ...event,
+    id: String(event.id || fallback.id).trim() || fallback.id,
+    slug: slugify(event.slug || fallback.slug, fallback.slug),
+    name: String(event.name || fallback.name).trim() || fallback.name,
+    date: String(event.date || fallback.date).trim() || fallback.date,
+    contactEmail: String(event.contactEmail || fallback.contactEmail).trim() || fallback.contactEmail,
+    download: normalizeDownloadSettings({
+      ...fallback.download,
+      ...(event.download || {}),
+    }),
   };
 }
 
@@ -28,23 +75,6 @@ function defaultStore() {
   };
 }
 
-function ensureStore() {
-  fs.mkdirSync(path.dirname(STORE_PATH), { recursive: true });
-
-  if (!fs.existsSync(STORE_PATH)) {
-    fs.writeFileSync(STORE_PATH, JSON.stringify(defaultStore(), null, 2));
-    return;
-  }
-
-  const current = loadStore();
-
-  if (!current.events || !Array.isArray(current.events) || current.events.length === 0) {
-    current.events = [defaultEvent()];
-  }
-
-  fs.writeFileSync(STORE_PATH, JSON.stringify(current, null, 2));
-}
-
 function loadStore() {
   if (!fs.existsSync(STORE_PATH)) {
     return defaultStore();
@@ -55,13 +85,31 @@ function loadStore() {
 }
 
 function saveStore(store) {
+  const nextStore = {
+    events: Array.isArray(store?.events) && store.events.length ? store.events.map(normalizeEvent) : [defaultEvent()],
+    participants: Array.isArray(store?.participants) ? store.participants : [],
+    photos: Array.isArray(store?.photos) ? store.photos : [],
+    batches: Array.isArray(store?.batches) ? store.batches : [],
+  };
+
   fs.mkdirSync(path.dirname(STORE_PATH), { recursive: true });
-  fs.writeFileSync(STORE_PATH, JSON.stringify(store, null, 2));
-  return store;
+  fs.writeFileSync(STORE_PATH, JSON.stringify(nextStore, null, 2));
+  return nextStore;
+}
+
+function ensureStore() {
+  fs.mkdirSync(path.dirname(STORE_PATH), { recursive: true });
+
+  if (!fs.existsSync(STORE_PATH)) {
+    saveStore(defaultStore());
+    return;
+  }
+
+  saveStore(loadStore());
 }
 
 function listEvents() {
-  return loadStore().events || [];
+  return (loadStore().events || []).map(normalizeEvent);
 }
 
 function getPrimaryEvent() {
@@ -70,6 +118,32 @@ function getPrimaryEvent() {
 
 function getEventByIdOrSlug(value) {
   return listEvents().find((event) => event.id === value || event.slug === value) || null;
+}
+
+function updateEventById(eventId, changes = {}) {
+  const store = loadStore();
+  const event = store.events.find((entry) => entry.id === eventId);
+
+  if (!event) {
+    return null;
+  }
+
+  const nextDownload = normalizeDownloadSettings({
+    ...(event.download || {}),
+    ...(changes.download || {}),
+  });
+
+  Object.assign(event, changes, {
+    slug: slugify(changes.slug || event.slug, event.slug || getPrimaryEvent().slug),
+    name: String(changes.name || event.name || '').trim() || getPrimaryEvent().name,
+    date: String(changes.date || event.date || '').trim() || getPrimaryEvent().date,
+    contactEmail: String(changes.contactEmail || event.contactEmail || '').trim() || getPrimaryEvent().contactEmail,
+    download: nextDownload,
+    updatedAt: new Date().toISOString(),
+  });
+
+  saveStore(store);
+  return normalizeEvent(event);
 }
 
 function listParticipantsForEvent(eventId) {
@@ -90,10 +164,11 @@ function getParticipantByToken(eventId, token) {
   ) || null;
 }
 
-function createOrFindParticipant({ eventId, firstname, lastname }) {
+function createOrFindParticipant({ eventId, firstname, lastname, email = '' }) {
   const store = loadStore();
   const normalizedFirst = String(firstname || '').trim();
   const normalizedLast = String(lastname || '').trim();
+  const normalizedEmail = String(email || '').trim().toLowerCase();
 
   const existing = store.participants.find(
     (participant) =>
@@ -103,6 +178,12 @@ function createOrFindParticipant({ eventId, firstname, lastname }) {
   );
 
   if (existing) {
+    if (normalizedEmail && existing.email !== normalizedEmail) {
+      existing.email = normalizedEmail;
+      existing.updatedAt = new Date().toISOString();
+      saveStore(store);
+    }
+
     return { participant: existing, created: false };
   }
 
@@ -111,6 +192,7 @@ function createOrFindParticipant({ eventId, firstname, lastname }) {
     eventId,
     firstname: normalizedFirst,
     lastname: normalizedLast,
+    email: normalizedEmail,
     token: uuidv4(),
     createdAt: new Date().toISOString(),
   };
@@ -128,7 +210,21 @@ function updateParticipantById(participantId, changes) {
     return null;
   }
 
-  Object.assign(participant, changes, { updatedAt: new Date().toISOString() });
+  const nextChanges = { ...changes };
+
+  if (Object.prototype.hasOwnProperty.call(nextChanges, 'firstname')) {
+    nextChanges.firstname = String(nextChanges.firstname || '').trim();
+  }
+
+  if (Object.prototype.hasOwnProperty.call(nextChanges, 'lastname')) {
+    nextChanges.lastname = String(nextChanges.lastname || '').trim();
+  }
+
+  if (Object.prototype.hasOwnProperty.call(nextChanges, 'email')) {
+    nextChanges.email = String(nextChanges.email || '').trim().toLowerCase();
+  }
+
+  Object.assign(participant, nextChanges, { updatedAt: new Date().toISOString() });
   saveStore(store);
   return participant;
 }
@@ -199,11 +295,24 @@ function updatePhotoRecord(photoId, changes) {
   return photo;
 }
 
+function deletePhotoById(photoId) {
+  const store = loadStore();
+  const index = store.photos.findIndex((photo) => photo.id === photoId);
+
+  if (index === -1) {
+    return null;
+  }
+
+  const [removedPhoto] = store.photos.splice(index, 1);
+  saveStore(store);
+  return removedPhoto;
+}
+
 function listPhotosForEvent(eventId) {
   return loadStore()
     .photos
     .filter((photo) => photo.eventId === eventId)
-    .sort((left, right) => left.sortOrder - right.sortOrder);
+    .sort((left, right) => (left.sortOrder || 0) - (right.sortOrder || 0));
 }
 
 function getPhotoById(photoId) {
@@ -214,7 +323,7 @@ function getPhotosForBatch(batchId) {
   return loadStore()
     .photos
     .filter((photo) => photo.batchId === batchId)
-    .sort((left, right) => left.sortOrder - right.sortOrder);
+    .sort((left, right) => (left.sortOrder || 0) - (right.sortOrder || 0));
 }
 
 function getVisiblePhotosForParticipant(eventId, participantId) {
@@ -232,7 +341,7 @@ function getVisiblePhotosForParticipant(eventId, participantId) {
         && !photo.isBadge
         && releasedBatchIds.has(photo.batchId)
     )
-    .sort((left, right) => left.sortOrder - right.sortOrder);
+    .sort((left, right) => (left.sortOrder || 0) - (right.sortOrder || 0));
 }
 
 function clearEventPhotos(eventId) {
@@ -269,6 +378,7 @@ module.exports = {
   getPrimaryEvent,
   listEvents,
   getEventByIdOrSlug,
+  updateEventById,
   listParticipantsForEvent,
   getParticipantById,
   getParticipantByToken,
@@ -280,6 +390,7 @@ module.exports = {
   updateBatch,
   addPhotoRecord,
   updatePhotoRecord,
+  deletePhotoById,
   listPhotosForEvent,
   getPhotoById,
   getPhotosForBatch,

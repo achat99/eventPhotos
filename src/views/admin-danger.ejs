@@ -1,0 +1,38 @@
+<%- include('partials/admin-shell-start', {
+  pageTitle,
+  event,
+  adminSection,
+  message,
+  error,
+  adminPageTitle: 'Gefahrenbereich',
+  adminPageDescription: 'Destruktive Aktionen bewusst getrennt vom normalen Arbeitsbereich halten.'
+}) %>
+
+<div class="row g-4">
+  <div class="col-12 col-lg-5">
+    <div class="panel-card card summary-tile h-100">
+      <div class="card-body p-4">
+        <div class="small text-secondary">Foto-Dateien</div>
+        <div class="display-5 fw-bold mb-3"><%= photoCount %></div>
+        <div class="small text-secondary">Batches</div>
+        <div class="display-6 fw-bold"><%= batches.length %></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-7">
+    <div class="panel-card card danger-zone-card h-100">
+      <div class="card-body p-4">
+        <h2 class="h4 text-danger mb-3">Alle Bilder aus dem System löschen</h2>
+        <p class="text-secondary">Es werden sämtliche hochgeladenen Originale, Thumbnails, Lookups und Batches dieses Events entfernt. Teilnehmer bleiben erhalten.</p>
+        <div class="small text-danger mb-4">Dieser Schritt ist endgültig und kann nicht rückgängig gemacht werden.</div>
+
+        <form action="/admin/events/<%= event.slug %>/delete-photos" method="post" onsubmit="return confirm('Wirklich alle Bilder und Batches dauerhaft löschen?');">
+          <button class="btn btn-outline-danger" type="submit" <%= !photoCount && !batches.length ? 'disabled' : '' %>>Alle Bilder löschen</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/admin-shell-end') %>

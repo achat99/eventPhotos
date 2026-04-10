@@ -1,133 +1,131 @@
-<!doctype html>
-<html lang="de">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title><%= pageTitle %></title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="/styles.css" rel="stylesheet" />
-  </head>
-  <body>
-    <main class="container-fluid py-4 px-lg-4">
-      <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
-        <div>
-          <span class="badge text-bg-dark mb-2">Adminbereich</span>
-          <h1 class="h3 mb-1"><%= event.name %></h1>
-          <p class="text-secondary mb-0">Upload, automatische QR-Zuordnung und Review-Freigabe.</p>
-        </div>
-        <form action="/admin/logout" method="post">
-          <button class="btn btn-outline-secondary" type="submit">Abmelden</button>
-        </form>
-      </div>
+<%- include('partials/admin-shell-start', {
+  pageTitle,
+  event,
+  adminSection,
+  message,
+  error,
+  adminPageTitle: 'Dashboard',
+  adminPageDescription: 'Alle wichtigen Bereiche jetzt sauber getrennt und direkt erreichbar.'
+}) %>
 
-      <% if (message) { %>
-        <div class="alert alert-success"><%= message %></div>
-      <% } %>
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3"><div class="panel-card card summary-tile"><div class="card-body"><div class="text-secondary small">Teilnehmer</div><div class="display-6 fw-bold"><%= stats.participants %></div></div></div></div>
+  <div class="col-sm-6 col-xl-3"><div class="panel-card card summary-tile"><div class="card-body"><div class="text-secondary small">Upload-Batches</div><div class="display-6 fw-bold"><%= stats.batches %></div></div></div></div>
+  <div class="col-sm-6 col-xl-3"><div class="panel-card card summary-tile"><div class="card-body"><div class="text-secondary small">Eventfotos</div><div class="display-6 fw-bold"><%= stats.photos %></div></div></div></div>
+  <div class="col-sm-6 col-xl-3"><div class="panel-card card summary-tile"><div class="card-body"><div class="text-secondary small">Offene Reviews</div><div class="display-6 fw-bold"><%= stats.pendingBatches %></div></div></div></div>
+</div>
 
-      <% if (error) { %>
-        <div class="alert alert-danger"><%= error %></div>
-      <% } %>
-
-      <div class="row g-3 mb-4">
-        <div class="col-sm-6 col-xl-3"><div class="panel-card card"><div class="card-body"><div class="text-secondary small">Teilnehmer</div><div class="display-6 fw-bold"><%= stats.participants %></div></div></div></div>
-        <div class="col-sm-6 col-xl-3"><div class="panel-card card"><div class="card-body"><div class="text-secondary small">Upload-Batches</div><div class="display-6 fw-bold"><%= stats.batches %></div></div></div></div>
-        <div class="col-sm-6 col-xl-3"><div class="panel-card card"><div class="card-body"><div class="text-secondary small">Eventfotos</div><div class="display-6 fw-bold"><%= stats.photos %></div></div></div></div>
-        <div class="col-sm-6 col-xl-3"><div class="panel-card card"><div class="card-body"><div class="text-secondary small">Offene Reviews</div><div class="display-6 fw-bold"><%= stats.pendingBatches %></div></div></div></div>
-      </div>
-
-      <div class="row g-4">
-        <div class="col-xl-5">
-          <div class="panel-card card h-100">
-            <div class="card-body p-4">
-              <h2 class="h4 mb-3">Neuen Batch hochladen</h2>
-              <p class="text-secondary">Ordner- oder Mehrfach-Upload. Die Verarbeitung erfolgt sequenziell nach Dateiname.</p>
-              <form action="/api/events/<%= event.id %>/upload" method="post" enctype="multipart/form-data" class="d-grid gap-3">
-                <input class="form-control" type="file" name="images" accept="image/*" webkitdirectory directory multiple required />
-                <button class="btn btn-primary" type="submit">Batch analysieren</button>
-              </form>
-            </div>
+<div class="row g-4">
+  <div class="col-12 col-xxl-7">
+    <div class="row g-3 mb-4">
+      <div class="col-md-6 col-xl-4">
+        <a class="panel-card card h-100 quick-link-card" href="/admin/events/<%= event.slug %>/participants">
+          <div class="card-body">
+            <h2 class="h5 mb-2">Teilnehmerverwaltung</h2>
+            <p class="text-secondary mb-0">Teilnehmer pflegen, QR-Codes laden und Bild-Downloads öffnen.</p>
           </div>
-        </div>
-
-        <div class="col-xl-7">
-          <div class="panel-card card h-100">
-            <div class="card-body p-4">
-              <h2 class="h4 mb-3">Teilnehmer</h2>
-              <div class="table-responsive">
-                <table class="table align-middle">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>QR-Token</th>
-                      <th>Erstellt</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <% if (!participants.length) { %>
-                      <tr><td colspan="3" class="text-secondary">Noch keine Teilnehmer registriert.</td></tr>
-                    <% } %>
-                    <% participants.forEach((participant) => { %>
-                      <tr>
-                        <td><strong><%= participant.firstname %> <%= participant.lastname %></strong></td>
-                        <td><code><%= participant.token %></code></td>
-                        <td><%= participant.createdAt %></td>
-                      </tr>
-                    <% }) %>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
+        </a>
       </div>
+      <div class="col-md-6 col-xl-4">
+        <a class="panel-card card h-100 quick-link-card" href="/admin/events/<%= event.slug %>/batches">
+          <div class="card-body">
+            <h2 class="h5 mb-2">Neuer Batch</h2>
+            <p class="text-secondary mb-0">Upload starten und Reviews kontrolliert freigeben.</p>
+          </div>
+        </a>
+      </div>
+      <div class="col-md-6 col-xl-4">
+        <a class="panel-card card h-100 quick-link-card" href="/admin/events/<%= event.slug %>/photos">
+          <div class="card-body">
+            <h2 class="h5 mb-2">Bildübersicht</h2>
+            <p class="text-secondary mb-0">Einzelfotos anklicken, neu zuordnen oder löschen.</p>
+          </div>
+        </a>
+      </div>
+    </div>
 
-      <div class="panel-card card mt-4">
-        <div class="card-body p-4">
-          <h2 class="h4 mb-3">Batches</h2>
-          <div class="table-responsive">
-            <table class="table align-middle">
-              <thead>
+    <div class="panel-card card">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+          <h2 class="h4 mb-0">Letzte Batches</h2>
+          <a class="btn btn-sm btn-outline-primary" href="/admin/events/<%= event.slug %>/batches">Zu den Batches</a>
+        </div>
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Erstellt</th>
+                <th>Status</th>
+                <th>Bilder</th>
+                <th class="text-end"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (!recentBatches.length) { %>
+                <tr><td colspan="4" class="text-secondary">Noch keine Batches vorhanden.</td></tr>
+              <% } %>
+              <% recentBatches.forEach((batch) => { %>
                 <tr>
-                  <th>Erstellt</th>
-                  <th>Status</th>
-                  <th>Bilder</th>
-                  <th></th>
+                  <td><%= batch.createdAt %></td>
+                  <td><span class="badge text-bg-<%= batch.status === 'done' ? 'success' : batch.status === 'review' ? 'warning' : 'secondary' %>"><%= batch.status %></span></td>
+                  <td><%= batch.processedImages %> / <%= batch.totalImages %></td>
+                  <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="/admin/events/<%= event.slug %>/batches/review?batch=<%= batch.id %>">Review</a></td>
                 </tr>
-              </thead>
-              <tbody>
-                <% if (!batches.length) { %>
-                  <tr><td colspan="4" class="text-secondary">Noch keine Upload-Batches vorhanden.</td></tr>
-                <% } %>
-                <% batches.forEach((batch) => { %>
-                  <tr>
-                    <td><%= batch.createdAt %></td>
-                    <td><span class="badge text-bg-<%= batch.status === 'done' ? 'success' : 'warning' %>"><%= batch.status %></span></td>
-                    <td><%= batch.processedImages %> / <%= batch.totalImages %></td>
-                    <td class="text-end">
-                      <a class="btn btn-sm btn-outline-primary" href="/admin/events/<%= event.slug %>/review?batch=<%= batch.id %>">Review öffnen</a>
-                    </td>
-                  </tr>
-                <% }) %>
-              </tbody>
-            </table>
-          </div>
+              <% }) %>
+            </tbody>
+          </table>
         </div>
       </div>
+    </div>
+  </div>
 
-      <div class="panel-card card mt-4 danger-zone-card">
-        <div class="card-body p-4">
-          <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-center">
-            <div>
-              <h2 class="h4 text-danger mb-2">Gefahrenbereich</h2>
-              <p class="text-secondary mb-1">Löscht alle hochgeladenen Bilder, Thumbnails und Batches aus dem System. Teilnehmer bleiben erhalten.</p>
-              <div class="small text-danger">Dieser Vorgang ist unwiderruflich.</div>
+  <div class="col-12 col-xxl-5">
+    <div class="panel-card card mb-4">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+          <h2 class="h4 mb-0">Neueste Teilnehmer</h2>
+          <a class="btn btn-sm btn-outline-primary" href="/admin/events/<%= event.slug %>/participants">Verwalten</a>
+        </div>
+
+        <% if (!recentParticipants.length) { %>
+          <div class="text-secondary">Noch keine Teilnehmer registriert.</div>
+        <% } %>
+
+        <div class="d-grid gap-2">
+          <% recentParticipants.forEach((participant) => { %>
+            <div class="border rounded-4 px-3 py-2 bg-white d-flex justify-content-between align-items-center gap-3">
+              <div>
+                <div class="fw-semibold"><%= participant.firstname %> <%= participant.lastname %></div>
+                <div class="small text-secondary"><%= participant.assignedPhotos %> Fotos · <%= participant.releasedPhotos %> freigegeben</div>
+              </div>
+              <a class="btn btn-sm btn-outline-secondary" href="/admin/participants/<%= participant.id %>/qr">QR</a>
             </div>
-            <form action="/admin/events/<%= event.slug %>/delete-photos" method="post" onsubmit="return confirm('Wirklich alle Bilder und Upload-Batches unwiderruflich löschen?');">
-              <button class="btn btn-outline-danger" type="submit" <%= !batches.length && !stats.photos ? 'disabled' : '' %>>Alle Bilder löschen</button>
-            </form>
-          </div>
+          <% }) %>
         </div>
       </div>
-    </main>
-  </body>
-</html>
+    </div>
+
+    <div class="panel-card card">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+          <h2 class="h4 mb-0">Zuletzt hochgeladene Fotos</h2>
+          <a class="btn btn-sm btn-outline-primary" href="/admin/events/<%= event.slug %>/photos">Bildübersicht</a>
+        </div>
+
+        <% if (!recentPhotos.length) { %>
+          <div class="text-secondary">Noch keine Bilder vorhanden.</div>
+        <% } %>
+
+        <div class="row g-3">
+          <% recentPhotos.forEach((photo) => { %>
+            <div class="col-6">
+              <img class="thumb-preview admin-mini-thumb" src="<%= photo.thumbnailUrl %>" alt="<%= photo.originalName %>" loading="lazy" />
+            </div>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/admin-shell-end') %>

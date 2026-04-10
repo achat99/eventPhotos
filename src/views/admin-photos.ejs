@@ -1,0 +1,145 @@
+<%- include('partials/admin-shell-start', {
+  pageTitle,
+  event,
+  adminSection,
+  message,
+  error,
+  adminPageTitle: 'Bildübersicht',
+  adminPageDescription: 'Einzelne Bilder anklicken, neu zuordnen oder direkt wieder löschen.'
+}) %>
+
+<div class="panel-card card mb-4">
+  <div class="card-body p-4">
+    <form action="/admin/events/<%= event.slug %>/photos" method="get" class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label">Teilnehmer</label>
+        <select class="form-select" name="participantId">
+          <option value="">Alle</option>
+          <% participants.forEach((participant) => { %>
+            <option value="<%= participant.id %>" <%= filters.participantId === participant.id ? 'selected' : '' %>><%= participant.firstname %> <%= participant.lastname %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Batch</label>
+        <select class="form-select" name="batchId">
+          <option value="">Alle</option>
+          <% batches.forEach((batch) => { %>
+            <option value="<%= batch.id %>" <%= filters.batchId === batch.id ? 'selected' : '' %>><%= batch.createdAt %> · <%= batch.status %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Typ</label>
+        <select class="form-select" name="type">
+          <option value="all" <%= filters.type === 'all' ? 'selected' : '' %>>Alle</option>
+          <option value="photos" <%= filters.type === 'photos' ? 'selected' : '' %>>Nur Fotos</option>
+          <option value="badges" <%= filters.type === 'badges' ? 'selected' : '' %>>Nur QR-Bilder</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Suche</label>
+        <input class="form-control" name="search" value="<%= filters.search %>" placeholder="Datei oder Name" />
+      </div>
+      <div class="col-md-2 d-grid gap-2">
+        <button class="btn btn-primary" type="submit">Filtern</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+  <h2 class="h4 mb-0">Treffer</h2>
+  <span class="badge text-bg-dark"><%= photos.length %> / <%= totalPhotos %> Bilder</span>
+</div>
+
+<% if (!photos.length) { %>
+  <div class="alert alert-light border">Für die gewählten Filter wurden keine Bilder gefunden.</div>
+<% } %>
+
+<div class="row g-4">
+  <% photos.forEach((photo) => { %>
+    <div class="col-sm-6 col-xl-4 col-xxl-3">
+      <button
+        type="button"
+        class="photo-admin-button"
+        data-bs-toggle="modal"
+        data-bs-target="#photoModal-<%= photo.id %>"
+      >
+        <div class="panel-card card photo-admin-card h-100">
+          <div class="card-body">
+            <img class="thumb-preview mb-3" src="<%= photo.thumbnailUrl %>" alt="<%= photo.originalName %>" loading="lazy" />
+            <div class="fw-semibold text-truncate"><%= photo.originalName %></div>
+            <div class="small text-secondary"><%= photo.participant ? `${photo.participant.firstname} ${photo.participant.lastname}` : 'Nicht zugeordnet' %></div>
+            <div class="small text-secondary">Batch: <%= photo.batch ? photo.batch.createdAt : '–' %></div>
+            <% if (photo.isBadge) { %>
+              <div class="badge-flag mt-2">QR-/Badgebild</div>
+            <% } %>
+          </div>
+        </div>
+      </button>
+    </div>
+
+    <div class="modal fade" id="photoModal-<%= photo.id %>" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content border-0 shadow-lg">
+          <div class="modal-header">
+            <h2 class="h5 modal-title"><%= photo.originalName %></h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-4">
+              <div class="col-lg-7">
+                <img class="admin-modal-image" src="<%= photo.fileUrl %>" alt="<%= photo.originalName %>" />
+              </div>
+              <div class="col-lg-5">
+                <form action="/admin/photos/<%= photo.id %>" method="post" class="d-grid gap-3">
+                  <input type="hidden" name="batchId" value="<%= photo.batchId %>" />
+                  <input type="hidden" name="returnTo" value="<%= returnTo %>" />
+
+                  <div>
+                    <label class="form-label">Teilnehmer</label>
+                    <select class="form-select" name="participantId">
+                      <option value="">Nicht zugeordnet</option>
+                      <% participants.forEach((participant) => { %>
+                        <option value="<%= participant.id %>" <%= photo.participantId === participant.id ? 'selected' : '' %>><%= participant.firstname %> <%= participant.lastname %></option>
+                      <% }) %>
+                    </select>
+                  </div>
+
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="yes" id="badge-<%= photo.id %>" name="isBadge" <%= photo.isBadge ? 'checked' : '' %> />
+                    <label class="form-check-label" for="badge-<%= photo.id %>">Als QR-/Badgebild markieren</label>
+                  </div>
+
+                  <div class="small text-secondary">
+                    Batch-Status: <strong><%= photo.batch ? photo.batch.status : '–' %></strong><br />
+                    Sortierung: <strong><%= photo.sortOrder %></strong>
+                  </div>
+
+                  <% if (photo.qrPayload) { %>
+                    <div class="small text-secondary admin-photo-meta"><strong>QR:</strong><br /><code><%= photo.qrPayload %></code></div>
+                  <% } %>
+
+                  <button class="btn btn-primary" type="submit">Zuordnung speichern</button>
+                </form>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer d-flex justify-content-between">
+            <form action="/admin/photos/<%= photo.id %>/delete" method="post" onsubmit="return confirm('Dieses Bild wirklich löschen?');">
+              <input type="hidden" name="returnTo" value="<%= returnTo %>" />
+              <button class="btn btn-outline-danger" type="submit">Foto löschen</button>
+            </form>
+            <div class="d-flex gap-2">
+              <a class="btn btn-outline-secondary" href="<%= photo.fileUrl %>" target="_blank" rel="noreferrer">Original öffnen</a>
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Schließen</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% }) %>
+</div>
+
+<%- include('partials/admin-shell-end') %>
