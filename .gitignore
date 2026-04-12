@@ -6,3 +6,5 @@ storage/lookups/
 storage/qrcodes/
 tmp/
 .DS_Store
+data/store.json
+

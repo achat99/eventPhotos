@@ -8,13 +8,28 @@
     <link href="/styles.css" rel="stylesheet" />
   </head>
   <body>
-    <main class="container py-5">
+    <main class="container py-5 site-shell">
+      <div class="dj-site-header">
+        <div class="dj-site-header-stripe"></div>
+        <div class="dj-site-header-inner">
+          <div class="dj-brand-block">
+            <div class="dj-brand-box">DLRG</div>
+            <div class="dj-brand-meta">
+              <small>DLRG Jugend</small>
+              <strong>Event-Admin</strong>
+            </div>
+          </div>
+          <div class="dj-site-claim">Upload, Review und Freigaben in einer klar gegliederten Verwaltungsansicht.</div>
+        </div>
+      </div>
+
       <div class="row justify-content-center">
         <div class="col-md-6 col-lg-4">
           <div class="panel-card card">
             <div class="card-body p-4">
+              <span class="badge text-bg-dark mb-3">Geschützter Bereich</span>
               <h1 class="h3 mb-3">Admin-Login</h1>
-              <p class="text-secondary">Geschützter Bereich für Fotografen und Review-Freigaben.</p>
+              <p class="text-secondary">Geschützter Bereich für Fotografen, Review und Freigaben.</p>
 
               <% if (error) { %>
                 <div class="alert alert-danger"><%= error %></div>
@@ -25,7 +40,7 @@
                   <label class="form-label">Passwort</label>
                   <input class="form-control" name="password" type="password" required />
                 </div>
-                <button class="btn btn-dark" type="submit">Anmelden</button>
+                <button class="btn btn-primary" type="submit">Anmelden</button>
               </form>
             </div>
           </div>
