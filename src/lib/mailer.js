@@ -131,10 +131,10 @@ async function sendParticipantAccessEmail({ event, participant, galleryUrl, qrIm
       `Rückfragen: ${event?.contactEmail || ''}`,
     ].join('\n'),
     html: `
-      <div style="margin:0;padding:24px;background:#f7f7f7;font-family:Arial,sans-serif;color:#363636;line-height:1.6;">
-        <div style="max-width:680px;margin:0 auto;background:#ffffff;border:1px solid rgba(1,49,84,0.1);border-radius:18px;overflow:hidden;box-shadow:0 12px 28px rgba(1,49,84,0.08);">
-          <div style="height:10px;background:linear-gradient(90deg,#ffde00 0 34%,#d7005f 34% 66%,#013154 66% 100%);"></div>
-          <div style="padding:20px 24px;background:#ffffff;border-bottom:1px solid rgba(1,49,84,0.08);">
+      <div style="margin:0;padding:24px;background:rgba(1,49,84,0.04);font-family:Arial,sans-serif;color:#013154;line-height:1.6;">
+        <div style="max-width:680px;margin:0 auto;background:rgba(1,49,84,0.01);border:1px solid rgba(1,49,84,0.18);border-radius:18px;overflow:hidden;box-shadow:0 12px 28px rgba(1,49,84,0.08);">
+          <div style="height:10px;background:linear-gradient(90deg,#d7005f 0 50%,#013154 50% 100%);"></div>
+          <div style="padding:20px 24px;background:rgba(1,49,84,0.02);border-bottom:1px solid rgba(1,49,84,0.08);">
             <div style="font-size:12px;font-weight:800;letter-spacing:1.3px;text-transform:uppercase;color:#d7005f;">DLRG Jugend</div>
             <div style="font-size:28px;font-weight:700;color:#013154;line-height:1.15;">Dein Zugang zu den Event-Fotos</div>
           </div>
@@ -142,16 +142,16 @@ async function sendParticipantAccessEmail({ event, participant, galleryUrl, qrIm
             <p style="margin-top:0;">Hallo <strong>${safeParticipantName}</strong>,</p>
             <p>danke für deine Anmeldung zu <strong>${safeEventName}</strong>. Im Anhang findest du deinen persönlichen QR-Code. Über den Link unten gelangst du direkt zu deiner Galerie.</p>
 
-            <div style="margin:18px 0;padding:16px 18px;background:#f7f7f7;border-left:4px solid #d7005f;border-radius:12px;">
+            <div style="margin:18px 0;padding:16px 18px;background:rgba(1,49,84,0.05);border-left:4px solid #d7005f;border-radius:12px;">
               <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;color:#013154;margin-bottom:8px;">Persönlicher Abruflink</div>
               <a href="${safeGalleryUrl}" style="color:#d7005f;text-decoration:none;font-weight:700;word-break:break-word;">${safeGalleryUrl}</a>
             </div>
 
             <p>Wenn du den QR-Code mit der Handykamera scannst, öffnet sich deine Galerie automatisch.</p>
-            ${attachments.length ? `<div style="margin:18px 0 22px;"><img src="cid:${qrCid}" alt="QR-Code" style="max-width:220px;border:1px solid rgba(1,49,84,0.12);border-radius:12px;padding:8px;background:#ffffff;" /></div>` : ''}
+            ${attachments.length ? `<div style="margin:18px 0 22px;"><img src="cid:${qrCid}" alt="QR-Code" style="max-width:220px;border:1px solid rgba(1,49,84,0.14);border-radius:12px;padding:8px;background:rgba(1,49,84,0.02);" /></div>` : ''}
 
             <div style="margin-top:20px;">
-              <a href="${safeGalleryUrl}" style="display:inline-block;background:#013154;color:#ffffff;text-decoration:none;font-weight:800;padding:12px 18px;border-radius:999px;">Galerie öffnen</a>
+              <a href="${safeGalleryUrl}" style="display:inline-block;background:#013154;color:white;text-decoration:none;font-weight:800;padding:12px 18px;border-radius:999px;">Galerie öffnen</a>
             </div>
 
             <p style="margin-top:20px;margin-bottom:0;">Rückfragen: <a href="mailto:${escapeHtml(event?.contactEmail || '')}" style="color:#d7005f;font-weight:700;text-decoration:none;">${escapeHtml(event?.contactEmail || '')}</a></p>
