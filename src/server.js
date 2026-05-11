@@ -957,6 +957,64 @@ app.get('/api/events/:id/batches', requireAdmin, attachEvent('id'), (req, res) =
   res.json({ batches: listBatchesForEvent(req.event.id) });
 });
 
+async function processBatchInBackground(eventId, batchId, orderedFiles) {
+  updateBatch(batchId, { status: 'processing', processedImages: 0 });
+  let currentParticipant = null;
+
+  for (const [index, file] of orderedFiles.entries()) {
+    try {
+      const filePath = await persistUpload(file.path, file.originalname, 'originals');
+      const thumbnailPath = await createThumbnail(filePath).catch(() => filePath);
+      const qrPayload = await decodeQrValue(filePath);
+      const { participant } = resolveParticipantFromPayload(eventId, qrPayload);
+
+      let participantId = currentParticipant ? currentParticipant.id : null;
+      let isBadge = false;
+      let detectionConfidence = 0;
+
+      if (participant) {
+        currentParticipant = participant;
+        participantId = participant.id;
+        isBadge = true;
+        detectionConfidence = 1;
+      } else if (qrPayload) {
+        currentParticipant = null;
+        participantId = null;
+        isBadge = true;
+        detectionConfidence = 0.5;
+      }
+
+      addPhotoRecord({
+        eventId,
+        batchId,
+        participantId,
+        filePath,
+        thumbnailPath,
+        sortOrder: index + 1,
+        isBadge,
+        uploadedAt: new Date().toISOString(),
+        fileSize: file.size,
+        originalName: file.originalname,
+        qrPayload,
+        detectionConfidence,
+      });
+    } catch (error) {
+      console.error(`[UPLOAD] Fehler bei Datei ${file.originalname}:`, error);
+    } finally {
+      updateBatch(batchId, {
+        processedImages: index + 1,
+      });
+    }
+  }
+
+  updateBatch(batchId, {
+    status: 'review',
+    processedImages: orderedFiles.length,
+  });
+
+  console.log(`[UPLOAD] Batch ${batchId} fertig. ${orderedFiles.length} Bilder verarbeitet.`);
+}
+
 app.post('/api/events/:id/upload', requireAdmin, attachEvent('id'), upload.array('images', MAX_UPLOAD_FILES), async (req, res) => {
   const skippedFiles = Array.isArray(req.skippedFiles) ? req.skippedFiles : [];
 
@@ -983,70 +1041,21 @@ app.post('/api/events/:id/upload', requireAdmin, attachEvent('id'), upload.array
     totalImages: orderedFiles.length,
   });
 
-  updateBatch(batch.id, { status: 'processing' });
-  let currentParticipant = null;
-
-  for (const [index, file] of orderedFiles.entries()) {
-    console.log(`[UPLOAD] Verarbeite Bild ${index + 1}/${orderedFiles.length}: ${file.originalname}`);
-    
-    const filePath = await persistUpload(file.path, file.originalname, 'originals');
-    const thumbnailPath = await createThumbnail(filePath).catch(() => filePath);
-    const qrPayload = await decodeQrValue(filePath);
-    
-    console.log(`[UPLOAD] QR erkannt in ${file.originalname}: ${qrPayload || 'NEIN'}`);
-    
-    const { participant } = resolveParticipantFromPayload(req.event.id, qrPayload);
-
-    let participantId = currentParticipant ? currentParticipant.id : null;
-    let isBadge = false;
-    let detectionConfidence = 0;
-
-    if (participant) {
-      currentParticipant = participant;
-      participantId = participant.id;
-      isBadge = true;
-      detectionConfidence = 1;
-    } else if (qrPayload) {
-      currentParticipant = null;
-      participantId = null;
-      isBadge = true;
-      detectionConfidence = 0.5;
-    }
-
-    addPhotoRecord({
-      eventId: req.event.id,
-      batchId: batch.id,
-      participantId,
-      filePath,
-      thumbnailPath,
-      sortOrder: index + 1,
-      isBadge,
-      uploadedAt: new Date().toISOString(),
-      fileSize: file.size,
-      originalName: file.originalname,
-      qrPayload,
-      detectionConfidence,
+  const eventId = req.event.id;
+  const eventSlug = req.event.slug;
+  void processBatchInBackground(eventId, batch.id, orderedFiles)
+    .catch((error) => {
+      console.error(`[UPLOAD] Batch ${batch.id} konnte nicht abgeschlossen werden:`, error);
+      updateBatch(batch.id, { status: 'error' });
     });
-
-    updateBatch(batch.id, {
-      processedImages: index + 1,
-    });
-  }
-
-  updateBatch(batch.id, {
-    status: 'review',
-    processedImages: orderedFiles.length,
-  });
 
   const skippedInfo = skippedFiles.length
     ? ` ${skippedFiles.length} Nicht-Bilddatei(en) wurden automatisch ignoriert.`
     : '';
 
-  console.log(`[UPLOAD] Batch ${batch.id} fertig. ${orderedFiles.length} Bilder verarbeitet.`);
-
-  redirectWithNotice(res, `/admin/events/${req.event.slug}/batches/review`, {
+  redirectWithNotice(res, `/admin/events/${eventSlug}/batches/review`, {
     batch: batch.id,
-    message: `Batch erfolgreich verarbeitet.${skippedInfo}`,
+    message: `Batch-Upload gestartet. Die Verarbeitung läuft im Hintergrund.${skippedInfo}`,
   });
 });
 

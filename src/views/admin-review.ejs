@@ -10,13 +10,17 @@
 
 <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
   <div class="alert alert-light border mb-0">
-    <strong>Status:</strong> <span class="badge text-bg-<%= batch.status === 'done' ? 'success' : 'warning' %>"><%= batch.status %></span>
+    <strong>Status:</strong>
+    <span class="badge text-bg-<%= batch.status === 'done' ? 'success' : (batch.status === 'review' ? 'info' : (batch.status === 'error' ? 'danger' : 'warning')) %>"><%= batch.status %></span>
     · <strong>Verarbeitet:</strong> <%= batch.processedImages %> / <%= batch.totalImages %>
+    <% if (batch.status === 'processing') { %>
+      <span class="ms-2 text-secondary">Seite aktualisiert sich automatisch.</span>
+    <% } %>
   </div>
   <div class="d-flex gap-2">
     <a class="btn btn-outline-secondary" href="/admin/events/<%= event.slug %>/batches">Zurück zu den Batches</a>
     <form action="/api/batches/<%= batch.id %>/confirm" method="post">
-      <button class="btn btn-success" type="submit">Batch freigeben</button>
+      <button class="btn btn-success" type="submit" <%= batch.status === 'processing' ? 'disabled' : '' %>>Batch freigeben</button>
     </form>
   </div>
 </div>
@@ -101,3 +105,11 @@
 <% }) %>
 
 <%- include('partials/admin-shell-end') %>
+
+<% if (batch.status === 'processing') { %>
+  <script>
+    setTimeout(() => {
+      window.location.reload();
+    }, 2500);
+  </script>
+<% } %>
