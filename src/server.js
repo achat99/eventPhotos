@@ -976,6 +976,8 @@ app.post('/api/events/:id/upload', requireAdmin, attachEvent('id'), upload.array
       sensitivity: 'base',
     }));
 
+  console.log(`[UPLOAD] ${orderedFiles.length} Bilder zum Verarbeiten`);
+
   const batch = createBatch({
     eventId: req.event.id,
     totalImages: orderedFiles.length,
@@ -985,9 +987,14 @@ app.post('/api/events/:id/upload', requireAdmin, attachEvent('id'), upload.array
   let currentParticipant = null;
 
   for (const [index, file] of orderedFiles.entries()) {
+    console.log(`[UPLOAD] Verarbeite Bild ${index + 1}/${orderedFiles.length}: ${file.originalname}`);
+    
     const filePath = await persistUpload(file.path, file.originalname, 'originals');
     const thumbnailPath = await createThumbnail(filePath).catch(() => filePath);
     const qrPayload = await decodeQrValue(filePath);
+    
+    console.log(`[UPLOAD] QR erkannt in ${file.originalname}: ${qrPayload || 'NEIN'}`);
+    
     const { participant } = resolveParticipantFromPayload(req.event.id, qrPayload);
 
     let participantId = currentParticipant ? currentParticipant.id : null;
@@ -1034,6 +1041,8 @@ app.post('/api/events/:id/upload', requireAdmin, attachEvent('id'), upload.array
   const skippedInfo = skippedFiles.length
     ? ` ${skippedFiles.length} Nicht-Bilddatei(en) wurden automatisch ignoriert.`
     : '';
+
+  console.log(`[UPLOAD] Batch ${batch.id} fertig. ${orderedFiles.length} Bilder verarbeitet.`);
 
   redirectWithNotice(res, `/admin/events/${req.event.slug}/batches/review`, {
     batch: batch.id,

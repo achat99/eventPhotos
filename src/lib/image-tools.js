@@ -68,8 +68,21 @@ async function decodeQrFromBuffer(buffer) {
     const image = await Jimp.read(buffer);
 
     return await new Promise((resolve) => {
+      let resolved = false;
+      const timeoutId = setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          resolve(null);
+        }
+      }, 3000);
+      
       const qr = new QrCode();
+      
       qr.callback = (error, value) => {
+        if (resolved) return;
+        resolved = true;
+        clearTimeout(timeoutId);
+        
         if (error || !value || !value.result) {
           resolve(null);
           return;
@@ -78,7 +91,15 @@ async function decodeQrFromBuffer(buffer) {
         resolve(value.result);
       };
 
-      qr.decode(image.bitmap);
+      try {
+        qr.decode(image.bitmap);
+      } catch (decodeError) {
+        if (!resolved) {
+          resolved = true;
+          clearTimeout(timeoutId);
+          resolve(null);
+        }
+      }
     });
   } catch (error) {
     return null;
@@ -99,83 +120,92 @@ function createCenteredCropArea(width, height, ratio) {
 
 async function decodeQrValue(imagePath) {
   try {
-    const { data: rotatedBuffer, info } = await sharp(imagePath)
-      .rotate()
-      .toBuffer({ resolveWithObject: true });
+    // Try multiple rotation angles to handle perspective distortion
+    const rotationAngles = [0, 5, -5, 10, -10, 15, -15];
+    
+    for (const angle of rotationAngles) {
+      const { data: rotatedBuffer, info } = await sharp(imagePath)
+        .rotate(angle, { background: { r: 255, g: 255, b: 255 } })
+        .toBuffer({ resolveWithObject: true });
 
-    const directResult = await decodeQrFromBuffer(rotatedBuffer);
-    if (directResult) {
-      return directResult;
-    }
+      const directResult = await decodeQrFromBuffer(rotatedBuffer);
+      if (directResult) {
+        return directResult;
+      }
 
-    const width = info.width || 1200;
-    const height = info.height || 1200;
-    const resizeOptions = {
-      width: 1800,
-      height: 1800,
-      fit: 'inside',
-      withoutEnlargement: false,
-    };
+      const width = info.width || 1200;
+      const height = info.height || 1200;
 
-    const candidateBuffers = [
-      await sharp(rotatedBuffer)
-        .resize(resizeOptions)
-        .png()
-        .toBuffer(),
-      await sharp(rotatedBuffer)
-        .grayscale()
-        .normalise()
-        .sharpen()
-        .resize(resizeOptions)
-        .png()
-        .toBuffer(),
-      await sharp(rotatedBuffer)
-        .grayscale()
-        .normalise()
-        .threshold(170)
-        .resize(resizeOptions)
-        .png()
-        .toBuffer(),
-    ];
-
-    for (const ratio of [0.85, 0.65, 0.5]) {
-      const cropArea = createCenteredCropArea(width, height, ratio);
-
-      candidateBuffers.push(
-        await sharp(rotatedBuffer)
-          .extract(cropArea)
-          .resize(resizeOptions)
-          .png()
-          .toBuffer()
-      );
-
-      candidateBuffers.push(
-        await sharp(rotatedBuffer)
-          .extract(cropArea)
+      // Fokussierte Liste von Kandidaten mit Emphasis auf Contrast
+      const candidateGenerators = [
+        // Aggressive threshold variations for tilted/perspective QR codes
+        () => sharp(rotatedBuffer)
           .grayscale()
           .normalise()
-          .sharpen()
-          .resize(resizeOptions)
+          .threshold(150)
+          .resize({ width: 1500, height: 1500, fit: 'inside' })
           .png()
-          .toBuffer()
-      );
+          .toBuffer(),
 
-      candidateBuffers.push(
-        await sharp(rotatedBuffer)
-          .extract(cropArea)
+        () => sharp(rotatedBuffer)
           .grayscale()
           .normalise()
           .threshold(170)
-          .resize(resizeOptions)
+          .resize({ width: 1500, height: 1500, fit: 'inside' })
           .png()
-          .toBuffer()
-      );
-    }
+          .toBuffer(),
 
-    for (const buffer of candidateBuffers) {
-      const result = await decodeQrFromBuffer(buffer);
-      if (result) {
-        return result;
+        () => sharp(rotatedBuffer)
+          .grayscale()
+          .normalise()
+          .threshold(190)
+          .resize({ width: 1500, height: 1500, fit: 'inside' })
+          .png()
+          .toBuffer(),
+
+        // Grayscale with strong sharpening
+        () => sharp(rotatedBuffer)
+          .grayscale()
+          .normalise()
+          .sharpen({ sigma: 2 })
+          .resize({ width: 1500, height: 1500, fit: 'inside' })
+          .png()
+          .toBuffer(),
+
+        // Centered crop with threshold
+        () => {
+          const cropArea = createCenteredCropArea(width, height, 0.7);
+          return sharp(rotatedBuffer)
+            .extract(cropArea)
+            .grayscale()
+            .normalise()
+            .threshold(170)
+            .resize({ width: 1500, height: 1500, fit: 'inside' })
+            .png()
+            .toBuffer();
+        },
+
+        // High contrast + invert for light QR codes
+        () => sharp(rotatedBuffer)
+          .grayscale()
+          .normalise()
+          .negate()
+          .threshold(80)
+          .resize({ width: 1500, height: 1500, fit: 'inside' })
+          .png()
+          .toBuffer(),
+      ];
+
+      for (const generator of candidateGenerators) {
+        try {
+          const buffer = await generator();
+          const result = await decodeQrFromBuffer(buffer);
+          if (result) {
+            return result;
+          }
+        } catch (err) {
+          continue;
+        }
       }
     }
 
